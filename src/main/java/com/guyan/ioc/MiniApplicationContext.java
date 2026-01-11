@@ -1,5 +1,7 @@
 package com.guyan.ioc;
 
+import com.guyan.ioc.core.BeanDefinition;
+import com.guyan.ioc.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -14,10 +16,15 @@ import java.util.Map;
 @Slf4j
 public class MiniApplicationContext {
 
+    // 存 BeanDefinition
+    private final Map<String, BeanDefinition> beanDefinitionMap = new HashMap<>();
+
+    // 存 Bean 实例（单例池）
     private final Map<String, Object> singletonObjects = new HashMap<>();
 
     public MiniApplicationContext(String xmlPath) throws Exception {
         loadBeans(xmlPath);
+        createBean();
     }
 
     public Object getBean(String name) {
@@ -51,14 +58,36 @@ public class MiniApplicationContext {
 
         for (int i = 0; i < length; i++) {
             Element element = (Element) bean.item(i);
+
+            // 创建 BeanDefinition 对象
             String id = element.getAttribute("id");
-            // 创建 Bean 对象
+            if (StringUtil.isEmpty(id)) {
+                log.warn("bean 定义中没有 id 属性");
+                continue;
+            }
             String className = element.getAttribute("class");
-            Object obj = Class.forName(className).newInstance();
-            // 加入集合
-            singletonObjects.put(id, obj);
+
+            BeanDefinition beanDefinition = new BeanDefinition(id, className);
+            beanDefinitionMap.put(id, beanDefinition);
         }
     }
 
+    public void createBean() throws Exception {
+
+        if (beanDefinitionMap.isEmpty()) {
+            log.warn("beanDefinitionMap 为空，无法创建 Bean");
+            return;
+        }
+
+        for (Map.Entry<String, BeanDefinition> entry : beanDefinitionMap.entrySet()) {
+            String beanId = entry.getKey();
+            BeanDefinition beanDefinition = entry.getValue();
+
+            String className = beanDefinition.getClassName();
+            Object obj = Class.forName(className).newInstance();
+
+            singletonObjects.put(beanId, obj);
+        }
+    }
 
 }
