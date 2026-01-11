@@ -1,15 +1,15 @@
 package com.guyan.ioc;
 
 import com.guyan.ioc.core.BeanDefinition;
+import com.guyan.ioc.core.PropertyValue;
 import com.guyan.ioc.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,13 +61,33 @@ public class MiniApplicationContext {
 
             // 创建 BeanDefinition 对象
             String id = element.getAttribute("id");
-            if (StringUtil.isEmpty(id)) {
-                log.warn("bean 定义中没有 id 属性");
-                continue;
-            }
             String className = element.getAttribute("class");
 
+            boolean isEmpty = StringUtil.isEmpty(id) || StringUtil.isEmpty(className);
+            if (isEmpty) {
+                log.warn("bean 定义中没有 id 属性 或 bean 定义中没有 class 属性");
+                continue;
+            }
+
+
             BeanDefinition beanDefinition = new BeanDefinition(id, className);
+
+            NodeList propertyNodes = element.getElementsByTagName("property");
+            int propertyLength = propertyNodes.getLength();
+            if (propertyLength > 0) {
+                for (int j = 0; j < propertyLength; j++) {
+                    Element propertyElement = (Element) propertyNodes.item(j);
+
+                    String name = propertyElement.getAttribute("name");
+                    String ref = propertyElement.getAttribute("ref");
+                    if (StringUtil.isEmpty(name) || StringUtil.isEmpty(ref)) {
+                        log.warn("property 定义中没有 name 或 ref 属性");
+                        continue;
+                    }
+                    beanDefinition.getPropertyValues().add(new PropertyValue(name, ref));
+                }
+            }
+
             beanDefinitionMap.put(id, beanDefinition);
         }
     }
@@ -88,6 +108,67 @@ public class MiniApplicationContext {
 
             singletonObjects.put(beanId, obj);
         }
+
+        for (Map.Entry<String, BeanDefinition> entry : beanDefinitionMap.entrySet()) {
+            String beanId = entry.getKey();
+            BeanDefinition beanDefinition = entry.getValue();
+            Object bean = singletonObjects.get(beanId);
+            populateProperties(bean, beanDefinition);
+        }
+
+    }
+
+    public void populateProperties(Object bean, BeanDefinition beanDefinition) {
+        boolean empty = beanDefinition.getPropertyValues().isEmpty();
+        if (empty) {
+            log.warn("beanDefinition 中没有 property 定义");
+            return;
+        }
+
+        try {
+            for (PropertyValue propertyValue : beanDefinition.getPropertyValues()) {
+                String propertyName = propertyValue.getName();
+                String ref = propertyValue.getRef();
+
+                // 1. 先从单例池中获取 refBean
+                Object refBean = singletonObjects.get(ref);
+                if (refBean == null) {
+                    log.warn("refBean 不存在");
+                    continue;
+                }
+
+                // 1. 通过反射设置属性值,后续放开
+                // try {
+                //     Field field = bean.getClass().getField(name);
+                //     if (!field.isAccessible()) {
+                //         field.setAccessible(true);
+                //     }
+                //     field.set(bean, refBean);
+                // } catch (Exception e) {
+                //     log.error("populateBean 失败", e);
+                //     throw new RuntimeException(e);
+                // }
+
+                // 2. 拼 setter 方法名
+                String setterMethodName =
+                        "set" + propertyName.substring(0, 1).toUpperCase()
+                                + propertyName.substring(1);
+
+                // 3. 找 setter 方法
+                Method[] methods = bean.getClass().getMethods();
+                for (Method method : methods) {
+                    if (method.getName().equals(setterMethodName)) {
+                        method.invoke(bean, refBean);
+                        break;
+                    }
+                }
+
+            }
+        } catch (Exception e) {
+            log.error("populateBean 失败", e);
+            throw new RuntimeException(e);
+        }
+
     }
 
 }
