@@ -20,6 +20,7 @@ class MiniApplicationContextTest {
         if (bean instanceof UserService) {
             UserService userService = (UserService) bean;
             userService.hello();
+            userService.user();
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.guyan.ioc;
 
+import com.guyan.ioc.convert.SimpleTypeConverter;
+import com.guyan.ioc.convert.TypeConverter;
 import com.guyan.ioc.core.BeanDefinition;
 import com.guyan.ioc.core.PropertyValue;
 import com.guyan.ioc.utils.StringUtil;
@@ -21,6 +23,8 @@ public class MiniApplicationContext {
 
     // 存 Bean 实例（单例池）
     private final Map<String, Object> singletonObjects = new HashMap<>();
+
+    private final TypeConverter typeConverter = new SimpleTypeConverter();
 
     public MiniApplicationContext(String xmlPath) throws Exception {
         loadBeans(xmlPath);
@@ -79,12 +83,18 @@ public class MiniApplicationContext {
                     Element propertyElement = (Element) propertyNodes.item(j);
 
                     String name = propertyElement.getAttribute("name");
+                    String value = propertyElement.getAttribute("value");
                     String ref = propertyElement.getAttribute("ref");
-                    if (StringUtil.isEmpty(name) || StringUtil.isEmpty(ref)) {
-                        log.warn("property 定义中没有 name 或 ref 属性");
+                    boolean propertyEmpty = StringUtil.isEmpty(name) || (StringUtil.isEmpty(ref) && StringUtil.isEmpty(value));
+                    if (propertyEmpty) {
+                        log.warn("property 定义中没有 name 和 ref 或 value 属性");
                         continue;
                     }
-                    beanDefinition.getPropertyValues().add(new PropertyValue(name, ref));
+                    if (StringUtil.isNotEmpty(value)) {
+                        beanDefinition.getPropertyValues().add(new PropertyValue(name, value, null));
+                    } else {
+                        beanDefinition.getPropertyValues().add(new PropertyValue(name, null, ref));
+                    }
                 }
             }
 
@@ -129,13 +139,17 @@ public class MiniApplicationContext {
             for (PropertyValue propertyValue : beanDefinition.getPropertyValues()) {
                 String propertyName = propertyValue.getName();
                 String ref = propertyValue.getRef();
+                String value = propertyValue.getValue();
 
                 // 1. 先从单例池中获取 refBean
-                Object refBean = singletonObjects.get(ref);
-                if (refBean == null) {
-                    log.warn("refBean 不存在");
-                    continue;
-                }
+                // Object refBean = null;
+                // if (StringUtil.isNotBlank(ref)) {
+                //     refBean = singletonObjects.get(ref);
+                //     if (refBean == null) {
+                //         log.warn("refBean 不存在");
+                //         continue;
+                //     }
+                // }
 
                 // 1. 通过反射设置属性值,后续放开
                 // try {
@@ -156,9 +170,20 @@ public class MiniApplicationContext {
 
                 // 3. 找 setter 方法
                 Method[] methods = bean.getClass().getMethods();
+                Object injectValue;
                 for (Method method : methods) {
                     if (method.getName().equals(setterMethodName)) {
-                        method.invoke(bean, refBean);
+
+                        if (StringUtil.isNotEmpty(value)) {
+                            Class<?> parameterType = method.getParameterTypes()[0];
+                            // 4. 普通参数，类型转换
+                            injectValue = typeConverter.convert(propertyValue.getValue(), parameterType);
+                        } else {
+                            injectValue = singletonObjects.get(ref);
+                        }
+                        if (injectValue != null) {
+                            method.invoke(bean, injectValue);
+                        }
                         break;
                     }
                 }
