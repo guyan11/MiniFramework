@@ -1,12 +1,13 @@
 package com.guyan.ioc;
 
-import com.guyan.ioc.convert.SimpleTypeConverter;
-import com.guyan.ioc.convert.TypeConverter;
+import com.guyan.ioc.convert.TypeConverterFactory;
 import com.guyan.ioc.core.BeanDefinition;
 import com.guyan.ioc.core.PropertyValue;
 import com.guyan.ioc.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.w3c.dom.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -24,7 +25,7 @@ public class MiniApplicationContext {
     // 存 Bean 实例（单例池）
     private final Map<String, Object> singletonObjects = new HashMap<>();
 
-    private final TypeConverter typeConverter = new SimpleTypeConverter();
+    private final TypeConverterFactory typeConverter = new TypeConverterFactory();
 
     public MiniApplicationContext(String xmlPath) throws Exception {
         loadBeans(xmlPath);
