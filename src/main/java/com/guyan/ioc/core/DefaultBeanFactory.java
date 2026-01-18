@@ -20,6 +20,8 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
     // 提前暴露的单例对象
     private final Map<String, Object> earlySingletonObjects = new HashMap<>();
 
+    private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>();
+
     @Override
     public Object getBean(String name) {
         Object bean = getSingletonBean(name);
@@ -31,6 +33,18 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
         if (earlySingletonBean != null) {
             return earlySingletonBean;
         }
+
+        Object factoryBean;
+        try {
+            factoryBean = getFactoryBean(name);
+            if (factoryBean != null) {
+                registerEarlySingleton(name, factoryBean);
+                return factoryBean;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
 
         BeanDefinition beanDefinition = getBeanDefinition(name);
         if (beanDefinition == null) {
@@ -46,6 +60,9 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
         try {
             clazz = Class.forName(className);
             Object bean = clazz.newInstance();
+
+            // 注册单例工厂
+            registerSingletonFactory(name, () -> getEarlyBeanReference(bean));
             // 提前暴露单例对象
             registerEarlySingleton(name, bean);
             // 注入属性
@@ -56,6 +73,10 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Object getEarlyBeanReference(Object bean) {
+        return bean;
     }
 
     private void populateBeanProperties(Object bean, BeanDefinition bd) {
@@ -149,10 +170,23 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
 
     public void registerEarlySingleton(String name, Object bean) {
         earlySingletonObjects.put(name, bean);
+        singletonFactories.remove(name);
     }
 
     private Object getEarlySingleton(String name) {
         return earlySingletonObjects.get(name);
+    }
+
+    public void registerSingletonFactory(String name, ObjectFactory<?> singletonFactory) {
+        singletonFactories.put(name, singletonFactory);
+    }
+
+    public Object getFactoryBean(String name) throws Exception {
+        ObjectFactory<?> singletonFactory = singletonFactories.get(name);
+        if (singletonFactory != null) {
+            return singletonFactory.getObject();
+        }
+        return null;
     }
 
 }
