@@ -17,12 +17,21 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
 
     private final TypeConverterFactory typeConverter = new TypeConverterFactory();
 
+    // 提前暴露的单例对象
+    private final Map<String, Object> earlySingletonObjects = new HashMap<>();
+
     @Override
     public Object getBean(String name) {
         Object bean = getSingletonBean(name);
         if (bean != null) {
             return bean;
         }
+
+        Object earlySingletonBean = getEarlySingleton(name);
+        if (earlySingletonBean != null) {
+            return earlySingletonBean;
+        }
+
         BeanDefinition beanDefinition = getBeanDefinition(name);
         if (beanDefinition == null) {
             throw new IllegalArgumentException("No such bean '" + name + "' is defined");
@@ -37,8 +46,12 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
         try {
             clazz = Class.forName(className);
             Object bean = clazz.newInstance();
-            registerSingleton(name, bean);
+            // 提前暴露单例对象
+            registerEarlySingleton(name, bean);
+            // 注入属性
             populateBeanProperties(bean, bd);
+            // 注册单例对象
+            registerSingleton(name, bean);
             return bean;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -120,6 +133,7 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
 
     @Override
     public void registerSingleton(String name, Object bean) {
+        earlySingletonObjects.remove(name);
         singletonObjects.put(name, bean);
     }
 
@@ -132,4 +146,13 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
     public BeanDefinition getBeanDefinition(String name) {
         return beanDefinitionMap.get(name);
     }
+
+    public void registerEarlySingleton(String name, Object bean) {
+        earlySingletonObjects.put(name, bean);
+    }
+
+    private Object getEarlySingleton(String name) {
+        return earlySingletonObjects.get(name);
+    }
+
 }
