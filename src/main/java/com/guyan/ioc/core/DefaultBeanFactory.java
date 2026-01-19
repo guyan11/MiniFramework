@@ -63,10 +63,10 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
 
             // 注册单例工厂
             registerSingletonFactory(name, () -> getEarlyBeanReference(bean));
-            // 提前暴露单例对象
-            registerEarlySingleton(name, bean);
             // 注入属性
             populateBeanProperties(bean, bd);
+            // 提前暴露单例对象
+            registerEarlySingleton(name, bean);
             // 注册单例对象
             registerSingleton(name, bean);
             return bean;
