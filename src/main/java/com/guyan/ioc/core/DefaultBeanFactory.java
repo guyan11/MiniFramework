@@ -65,14 +65,16 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
             registerSingletonFactory(name, () -> getEarlyBeanReference(bean));
             // 注入属性
             populateBeanProperties(bean, bd);
-            // 提前暴露单例对象
-            registerEarlySingleton(name, bean);
             // 注册单例对象
             registerSingleton(name, bean);
             return bean;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Object removeEarlySingleton(String name) {
+        return earlySingletonObjects.remove(name);
     }
 
     private Object getEarlyBeanReference(Object bean) {
