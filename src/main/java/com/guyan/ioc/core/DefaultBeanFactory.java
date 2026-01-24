@@ -1,7 +1,6 @@
 package com.guyan.ioc.core;
 
 import com.guyan.ioc.convert.TypeConverterFactory;
-import com.guyan.ioc.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -74,8 +73,8 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
         }
     }
 
-    private Object removeEarlySingleton(String name) {
-        return earlySingletonObjects.remove(name);
+    private void removeEarlySingleton(String name) {
+        earlySingletonObjects.remove(name);
     }
 
     private Object getEarlyBeanReference(BeanWrapper beanWrapper) {
@@ -162,7 +161,7 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
 
     @Override
     public void registerSingleton(String name, Object bean) {
-        earlySingletonObjects.remove(name);
+        removeEarlySingleton(name);
         singletonObjects.put(name, bean);
     }
 
