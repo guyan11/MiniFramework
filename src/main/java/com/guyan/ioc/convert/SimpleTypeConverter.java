@@ -13,7 +13,7 @@ public class SimpleTypeConverter implements TypeConverter {
     }
 
     @Override
-    public Object convert(String value, Class<?> targetType) {
+    public Object convert(Object value, Class<?> targetType) {
         return factory.convert(value, targetType);
     }
 

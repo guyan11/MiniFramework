@@ -25,7 +25,17 @@ public class TypeConverterFactory {
         }
     }
 
-    public Object convert(String value, Class<?> targetType) {
+    public Object convert(Object value, Class<?> targetType) {
+
+        if (value == null) {
+            return null;
+        }
+
+        // 如果类型匹配，则直接返回
+        if (targetType.isAssignableFrom(value.getClass())) {
+            return value;
+        }
+
         TypeConverter typeConverter = converterMap.get(targetType);
         if (typeConverter != null) {
             return typeConverter.convert(value, targetType);

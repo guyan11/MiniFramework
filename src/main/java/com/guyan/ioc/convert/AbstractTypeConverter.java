@@ -3,7 +3,7 @@ package com.guyan.ioc.convert;
 public abstract class AbstractTypeConverter implements TypeConverter {
 
     @Override
-    public Object convert(String value, Class<?> targetType) {
+    public Object convert(Object value, Class<?> targetType) {
         // 通用校验逻辑
         validateInput(value);
 
@@ -14,7 +14,7 @@ public abstract class AbstractTypeConverter implements TypeConverter {
     /**
      * 输入参数校验（可被子类覆盖）
      */
-    protected void validateInput(String value) {
+    protected void validateInput(Object value) {
         if (value == null) {
             throw new IllegalArgumentException("Value cannot be null");
         }
@@ -23,7 +23,7 @@ public abstract class AbstractTypeConverter implements TypeConverter {
     /**
      * 子类实现具体的转换逻辑
      */
-    protected abstract Object convertInternal(String value);
+    protected abstract Object convertInternal(Object value);
 
     /**
      * 可选：通用的工具方法，供子类使用
