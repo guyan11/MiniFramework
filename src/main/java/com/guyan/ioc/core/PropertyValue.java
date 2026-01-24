@@ -10,10 +10,7 @@ public class PropertyValue {
     // 属性名
     private String name;
 
-    // 属性值 String 形式
-    private String value;
-
-    // 属性值,引用的 beanId
-    private String ref;
+    // 属性值 （String / BeanReference）
+    private Object value;
 
 }

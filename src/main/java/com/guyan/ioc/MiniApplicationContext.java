@@ -3,6 +3,7 @@ package com.guyan.ioc;
 import com.guyan.ioc.convert.SimpleTypeConverter;
 import com.guyan.ioc.convert.TypeConverter;
 import com.guyan.ioc.core.BeanDefinition;
+import com.guyan.ioc.core.BeanReference;
 import com.guyan.ioc.core.PropertyValue;
 import com.guyan.ioc.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -91,9 +92,9 @@ public class MiniApplicationContext {
                         continue;
                     }
                     if (StringUtil.isNotEmpty(value)) {
-                        beanDefinition.getPropertyValues().add(new PropertyValue(name, value, null));
+                        beanDefinition.getPropertyValues().add(new PropertyValue(name, value));
                     } else {
-                        beanDefinition.getPropertyValues().add(new PropertyValue(name, null, ref));
+                        beanDefinition.getPropertyValues().add(new PropertyValue(name, new BeanReference(ref)));
                     }
                 }
             }
@@ -138,8 +139,7 @@ public class MiniApplicationContext {
         try {
             for (PropertyValue propertyValue : beanDefinition.getPropertyValues()) {
                 String propertyName = propertyValue.getName();
-                String ref = propertyValue.getRef();
-                String value = propertyValue.getValue();
+                Object value = propertyValue.getValue();
 
                 // 1. 先从单例池中获取 refBean
                 // Object refBean = null;
@@ -174,12 +174,12 @@ public class MiniApplicationContext {
                 for (Method method : methods) {
                     if (method.getName().equals(setterMethodName)) {
 
-                        if (StringUtil.isNotEmpty(value)) {
+                        if (!(value instanceof BeanReference)) {
                             Class<?> parameterType = method.getParameterTypes()[0];
                             // 4. 普通参数，类型转换
                             injectValue = typeConverter.convert(propertyValue.getValue(), parameterType);
                         } else {
-                            injectValue = singletonObjects.get(ref);
+                            injectValue = singletonObjects.get(((BeanReference) value).getBeanName());
                         }
                         if (injectValue != null) {
                             method.invoke(bean, injectValue);

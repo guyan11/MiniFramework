@@ -6,5 +6,5 @@ public interface BeanWrapper {
 
     Class<?> getWrappedClass();
 
-    void setPropertyValue(String propertyName, String value, Object ref) throws NoSuchFieldException, IllegalAccessException;
+    void setPropertyValue(String propertyName, Object value) throws NoSuchFieldException, IllegalAccessException;
 }

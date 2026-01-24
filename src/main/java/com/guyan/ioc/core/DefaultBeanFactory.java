@@ -92,8 +92,7 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
         try {
             for (PropertyValue propertyValue : bd.getPropertyValues()) {
                 String propertyName = propertyValue.getName();
-                String ref = propertyValue.getRef();
-                String value = propertyValue.getValue();
+                Object value = propertyValue.getValue();
 
                 // 1. 先从单例池中获取 refBean
                 // Object refBean = null;
@@ -141,11 +140,13 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
                 //         break;
                 //     }
                 // }
-                Object injectValue = null;
-                if (StringUtil.isNotEmpty(ref)) {
-                    injectValue = getBean(ref);
+                Object injectValue;
+                if (value instanceof BeanReference) {
+                    injectValue = getBean(((BeanReference) value).getBeanName());
+                } else {
+                    injectValue = value;
                 }
-                beanWrapper.setPropertyValue(propertyName, value, injectValue);
+                beanWrapper.setPropertyValue(propertyName, injectValue);
             }
         } catch (Exception e) {
             log.error("populateBean 失败", e);

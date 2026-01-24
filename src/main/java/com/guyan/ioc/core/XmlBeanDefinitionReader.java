@@ -76,10 +76,13 @@ public class XmlBeanDefinitionReader implements BeanDefinitionReader {
                         log.warn("property 定义中没有 name 和 ref 或 value 属性");
                         continue;
                     }
+                    Object propertyValue;
                     if (StringUtil.isNotEmpty(value)) {
-                        beanDefinition.getPropertyValues().add(new PropertyValue(name, value, null));
+                        propertyValue = value;
+                        beanDefinition.getPropertyValues().add(new PropertyValue(name, propertyValue));
                     } else {
-                        beanDefinition.getPropertyValues().add(new PropertyValue(name, null, ref));
+                        propertyValue = new BeanReference(ref);
+                        beanDefinition.getPropertyValues().add(new PropertyValue(name, propertyValue));
                     }
                 }
             }
