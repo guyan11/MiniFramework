@@ -4,7 +4,6 @@ import com.guyan.ioc.convert.TypeConverterFactory;
 import com.guyan.ioc.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,17 +55,19 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
 
     private Object createBean(String name, BeanDefinition bd) {
         String className = bd.getClassName();
-        Class<?> clazz = null;
+        Class<?> clazz;
         try {
             clazz = Class.forName(className);
             Object bean = clazz.newInstance();
 
+            BeanWrapper beanWrapper = new DefaultBeanWrapper(bean, typeConverter);
+
             // 注册单例工厂
-            registerSingletonFactory(name, () -> getEarlyBeanReference(bean));
+            registerSingletonFactory(name, () -> getEarlyBeanReference(beanWrapper));
             // 注入属性
-            populateBeanProperties(bean, bd);
+            populateBeanProperties(beanWrapper, bd);
             // 注册单例对象
-            registerSingleton(name, bean);
+            registerSingleton(name, beanWrapper.getWrappedInstance());
             return bean;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -77,11 +78,11 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
         return earlySingletonObjects.remove(name);
     }
 
-    private Object getEarlyBeanReference(Object bean) {
-        return bean;
+    private Object getEarlyBeanReference(BeanWrapper beanWrapper) {
+        return beanWrapper.getWrappedInstance();
     }
 
-    private void populateBeanProperties(Object bean, BeanDefinition bd) {
+    private void populateBeanProperties(BeanWrapper beanWrapper, BeanDefinition bd) {
         boolean empty = bd.getPropertyValues().isEmpty();
         if (empty) {
             log.warn("beanDefinition 中没有 property 定义");
@@ -117,30 +118,34 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
                 // }
 
                 // 2. 拼 setter 方法名
-                String setterMethodName =
-                        "set" + propertyName.substring(0, 1).toUpperCase()
-                                + propertyName.substring(1);
+                // String setterMethodName =
+                //         "set" + propertyName.substring(0, 1).toUpperCase()
+                //                 + propertyName.substring(1);
 
                 // 3. 找 setter 方法
-                Method[] methods = bean.getClass().getMethods();
-                Object injectValue;
-                for (Method method : methods) {
-                    if (method.getName().equals(setterMethodName)) {
-
-                        if (StringUtil.isNotEmpty(value)) {
-                            Class<?> parameterType = method.getParameterTypes()[0];
-                            // 4. 普通参数，类型转换
-                            injectValue = typeConverter.convert(propertyValue.getValue(), parameterType);
-                        } else {
-                            injectValue = getBean(ref);
-                        }
-                        if (injectValue != null) {
-                            method.invoke(bean, injectValue);
-                        }
-                        break;
-                    }
+                // Method[] methods = bean.getClass().getMethods();
+                // Object injectValue;
+                // for (Method method : methods) {
+                //     if (method.getName().equals(setterMethodName)) {
+                //
+                //         if (StringUtil.isNotEmpty(value)) {
+                //             Class<?> parameterType = method.getParameterTypes()[0];
+                //             // 4. 普通参数，类型转换
+                //             injectValue = typeConverter.convert(propertyValue.getValue(), parameterType);
+                //         } else {
+                //             injectValue = getBean(ref);
+                //         }
+                //         if (injectValue != null) {
+                //             method.invoke(bean, injectValue);
+                //         }
+                //         break;
+                //     }
+                // }
+                Object injectValue = null;
+                if (StringUtil.isNotEmpty(ref)) {
+                    injectValue = getBean(ref);
                 }
-
+                beanWrapper.setPropertyValue(propertyName, value, injectValue);
             }
         } catch (Exception e) {
             log.error("populateBean 失败", e);
