@@ -1,5 +1,6 @@
 package com.guyan.ioc.core;
 
+import com.guyan.ioc.domain.User;
 import com.guyan.service.OrderServiceCircle;
 import com.guyan.service.UserService;
 import com.guyan.service.UserServiceCircle;
@@ -37,6 +38,16 @@ class XmlApplicationContextTest {
             }
         } catch (Exception e) {
             log.error("", e);
+        }
+    }
+
+    @Test
+    public void getBeanByEditor() throws Exception {
+        XmlApplicationContext context = new XmlApplicationContext("META-INF/beans.xml");
+        Object bean = context.getBean("user");
+        if (bean instanceof User) {
+            User user = (User) bean;
+            System.out.println(user);
         }
     }
 }

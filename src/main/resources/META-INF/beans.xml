@@ -9,13 +9,12 @@
         <property name="user" ref="user"/>
     </bean>
 
-    <bean id="orderService" class="com.guyan.service.OrderService">
-        <property name="userService" ref="userService"/>
-    </bean>
+    <bean id="orderService" class="com.guyan.service.OrderService"/>
 
     <bean id="user" class="com.guyan.ioc.domain.User">
         <property name="name" value="tom"/>
         <property name="age" value="18"/>
+        <property name="birthday" value="2025-01-01"/>
     </bean>
 
     <bean id="orderServiceCircle" class="com.guyan.service.OrderServiceCircle">

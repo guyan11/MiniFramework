@@ -1,5 +1,11 @@
 package com.guyan.ioc.convert;
 
+import com.guyan.ioc.editor.DatePropertyEditor;
+import com.guyan.ioc.editor.PropertyEditor;
+import com.guyan.ioc.editor.PropertyEditorRegistry;
+
+import java.text.ParseException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,8 +13,11 @@ public class TypeConverterFactory {
 
     private final Map<Class<?>, TypeConverter> converterMap = new HashMap<>();
 
+    private final PropertyEditorRegistry propertyEditorRegistry = new PropertyEditorRegistry();
+
     public TypeConverterFactory() {
         registerDefaultConverter();
+        registerDefaultEditor();
     }
 
     private void registerDefaultConverter() {
@@ -22,6 +31,17 @@ public class TypeConverterFactory {
     public void registerConverter(Class<?> targetType, TypeConverter typeConverter) {
         if (targetType != null && typeConverter != null) {
             converterMap.put(targetType, typeConverter);
+        }
+    }
+
+
+    private void registerDefaultEditor() {
+        registerEditor(Date.class, new DatePropertyEditor("yyyy-MM-dd"));
+    }
+
+    private void registerEditor(Class<?> targetType, PropertyEditor propertyEditor) {
+        if (targetType != null && propertyEditor != null) {
+            propertyEditorRegistry.registerEditor(targetType, propertyEditor);
         }
     }
 
@@ -40,6 +60,17 @@ public class TypeConverterFactory {
         if (typeConverter != null) {
             return typeConverter.convert(value, targetType);
         }
+
+        PropertyEditor propertyEditor = propertyEditorRegistry.findEditor(targetType);
+        if (propertyEditor != null) {
+            try {
+                propertyEditor.setAsText(value.toString());
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+            return propertyEditor.getValue();
+        }
+
         throw new IllegalArgumentException("No converter found for target type: " + targetType);
     }
 
