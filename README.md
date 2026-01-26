@@ -2,7 +2,7 @@
 
 # MiniFramework
 
-Lightweight Spring IOC Container Practice Framework
+Light weight Spring IOC Container Practice Framework
 
 </div>
 
