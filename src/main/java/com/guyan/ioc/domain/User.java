@@ -13,4 +13,6 @@ public class User {
 
     private Date birthday;
 
+    private Address address;
+
 }

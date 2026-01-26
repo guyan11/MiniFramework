@@ -15,6 +15,7 @@
         <property name="name" value="tom"/>
         <property name="age" value="18"/>
         <property name="birthday" value="2025-01-01"/>
+        <property name="address" value="SINGAPORE"/>
     </bean>
 
     <bean id="orderServiceCircle" class="com.guyan.service.OrderServiceCircle">

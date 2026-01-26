@@ -1,6 +1,8 @@
 package com.guyan.ioc.convert;
 
+import com.guyan.ioc.domain.Address;
 import com.guyan.ioc.editor.DatePropertyEditor;
+import com.guyan.ioc.editor.EnumPropertyEditor;
 import com.guyan.ioc.editor.PropertyEditor;
 import com.guyan.ioc.editor.PropertyEditorRegistry;
 
@@ -37,6 +39,7 @@ public class TypeConverterFactory {
 
     private void registerDefaultEditor() {
         registerEditor(Date.class, new DatePropertyEditor("yyyy-MM-dd"));
+        registerEditor(Address.class, new EnumPropertyEditor(Address.class));
     }
 
     private void registerEditor(Class<?> targetType, PropertyEditor propertyEditor) {
