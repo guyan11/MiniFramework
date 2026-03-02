@@ -26,4 +26,6 @@
         <property name="orderServiceCircle" ref="orderServiceCircle"/>
     </bean>
 
+    <bean id="logProcessor" class="com.guyan.ioc.lifecycle.LogBeanPostProcessor"/>
+
 </beans>

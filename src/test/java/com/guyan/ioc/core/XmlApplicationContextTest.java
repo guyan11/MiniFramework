@@ -44,6 +44,8 @@ class XmlApplicationContextTest {
     @Test
     public void getBeanByEditor() throws Exception {
         XmlApplicationContext context = new XmlApplicationContext("META-INF/beans.xml");
+        DefaultBeanFactory beanFactory = context.getBeanFactory();
+        beanFactory.registerBeanPostProcessors();
         Object bean = context.getBean("user");
         if (bean instanceof User) {
             User user = (User) bean;

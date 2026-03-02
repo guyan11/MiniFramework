@@ -1,9 +1,12 @@
 package com.guyan.ioc.core;
 
 import com.guyan.ioc.convert.TypeConverterFactory;
+import com.guyan.ioc.lifecycle.BeanPostProcessor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -19,6 +22,8 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
     private final Map<String, Object> earlySingletonObjects = new HashMap<>();
 
     private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>();
+
+    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
 
     @Override
     public Object getBean(String name) {
@@ -59,18 +64,43 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
             clazz = Class.forName(className);
             Object bean = clazz.newInstance();
 
+            bean = applyBeanPostProcessorsBeforeInitialization(bean, name);
+
             BeanWrapper beanWrapper = new DefaultBeanWrapper(bean, typeConverter);
 
             // 注册单例工厂
             registerSingletonFactory(name, () -> getEarlyBeanReference(beanWrapper));
             // 注入属性
             populateBeanProperties(beanWrapper, bd);
+            // 初始化 initializeBean
+            initializeBean(name, beanWrapper.getWrappedInstance(), bd);
+            bean = applyBeanPostProcessorsAfterInitialization(beanWrapper.getWrappedInstance(), name);
             // 注册单例对象
             registerSingleton(name, beanWrapper.getWrappedInstance());
             return bean;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void initializeBean(String name, Object bean, BeanDefinition bd) {
+        if (bean instanceof InitializingBean) {
+            ((InitializingBean) bean).afterPropertiesSet();
+        }
+    }
+
+    private Object applyBeanPostProcessorsBeforeInitialization(Object bean, String name) throws Exception {
+        for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+            bean = beanPostProcessor.postProcessBeforeInitialization(bean, name);
+        }
+        return bean;
+    }
+
+    private Object applyBeanPostProcessorsAfterInitialization(Object bean, String name) throws Exception {
+        for (BeanPostProcessor beanPostProcessor : beanPostProcessors) {
+            bean = beanPostProcessor.postProcessAfterInitialization(bean, name);
+        }
+        return bean;
     }
 
     private void removeEarlySingleton(String name) {
@@ -194,6 +224,21 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
             return singletonFactory.getObject();
         }
         return null;
+    }
+
+    public void addBeanPostProcessor(BeanPostProcessor beanPostProcessor) {
+        beanPostProcessors.add(beanPostProcessor);
+    }
+
+    public void registerBeanPostProcessors() throws Exception {
+        for (String name : beanDefinitionMap.keySet()) {
+            String beanName = beanDefinitionMap.get(name).getClassName();
+            Class<?> clazz = Class.forName(beanName);
+            if (BeanPostProcessor.class.isAssignableFrom(clazz)) {
+                BeanPostProcessor processor = (BeanPostProcessor) getBean(name);
+                beanPostProcessors.add(processor);
+            }
+        }
     }
 
 }

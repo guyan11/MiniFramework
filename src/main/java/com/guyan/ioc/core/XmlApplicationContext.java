@@ -14,4 +14,8 @@ public class XmlApplicationContext implements ApplicationContext {
     public Object getBean(String name) {
         return beanFactory.getBean(name);
     }
+
+    public DefaultBeanFactory getBeanFactory() {
+        return beanFactory;
+    }
 }
