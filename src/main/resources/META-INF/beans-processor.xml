@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+    <bean id="userService" class="com.guyan.service.UserService">
+        <property name="orderService" ref="orderService"/>
+    </bean>
+
+    <bean id="orderService" class="com.guyan.service.OrderService"/>
+
+    <bean id="logProcessor" class="com.guyan.ioc.lifecycle.LogBeanPostProcessor"/>
+
+</beans>

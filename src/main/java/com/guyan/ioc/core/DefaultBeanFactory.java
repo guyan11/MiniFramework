@@ -2,6 +2,7 @@ package com.guyan.ioc.core;
 
 import com.guyan.ioc.convert.TypeConverterFactory;
 import com.guyan.ioc.lifecycle.BeanPostProcessor;
+import com.guyan.ioc.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -231,12 +232,20 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
     }
 
     public void registerBeanPostProcessors() throws Exception {
-        for (String name : beanDefinitionMap.keySet()) {
-            String beanName = beanDefinitionMap.get(name).getClassName();
-            Class<?> clazz = Class.forName(beanName);
+        for (Map.Entry<String, BeanDefinition> entry : beanDefinitionMap.entrySet()) {
+            String beanName = entry.getKey();
+            BeanDefinition beanDefinition = entry.getValue();
+            if (null == beanName || null == beanDefinition) {
+                continue;
+            }
+            String className = beanDefinition.getClassName();
+            if (StringUtil.isEmpty(className)) {
+                continue;
+            }
+            Class<?> clazz = Class.forName(className);
             if (BeanPostProcessor.class.isAssignableFrom(clazz)) {
-                BeanPostProcessor processor = (BeanPostProcessor) getBean(name);
-                beanPostProcessors.add(processor);
+                BeanPostProcessor processor = (BeanPostProcessor) getBean(beanName);
+                addBeanPostProcessor(processor);
             }
         }
     }
