@@ -1,7 +1,9 @@
 package com.guyan.ioc.core;
 
+import com.guyan.ioc.lifecycle.AopBeanPostProcessor;
 import com.guyan.ioc.lifecycle.LogBeanPostProcessor;
 import com.guyan.service.UserService;
+import com.guyan.service.UserServiceAop;
 import org.junit.jupiter.api.Test;
 
 public class BeanPostProcessorTest {
@@ -29,6 +31,15 @@ public class BeanPostProcessorTest {
             UserService userService = (UserService) bean;
             userService.hello();
         }
+    }
+
+    @Test
+    public void testAopProxy() throws Exception {
+        XmlApplicationContext context = new XmlApplicationContext("META-INF/beans-processor.xml");
+        DefaultBeanFactory beanFactory = context.getBeanFactory();
+        beanFactory.addBeanPostProcessor(new AopBeanPostProcessor());
+        UserServiceAop userServiceAop = (UserServiceAop) context.getBean("userServiceAop");
+        userServiceAop.test();
     }
 
 }

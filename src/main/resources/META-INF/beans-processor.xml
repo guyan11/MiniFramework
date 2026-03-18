@@ -8,4 +8,6 @@
 
     <bean id="logProcessor" class="com.guyan.ioc.lifecycle.LogBeanPostProcessor"/>
 
+    <bean id="userServiceAop" class="com.guyan.service.UserServiceAopImpl"/>
+
 </beans>

@@ -77,7 +77,7 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
             initializeBean(name, beanWrapper.getWrappedInstance(), bd);
             bean = applyBeanPostProcessorsAfterInitialization(beanWrapper.getWrappedInstance(), name);
             // 注册单例对象
-            registerSingleton(name, beanWrapper.getWrappedInstance());
+            registerSingleton(name, bean);
             return bean;
         } catch (Exception e) {
             throw new RuntimeException(e);
