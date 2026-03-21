@@ -11,10 +11,8 @@ public class LogMethodInterceptor implements MethodInterceptor {
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
         Method method = invocation.getMethod();
-        Object[] args = invocation.getArguments();
-        Object target = invocation.getTarget();
         log.info("before invoke method:{}", method.getName());
-        Object result = method.invoke(target, args);
+        Object result = invocation.proceed();
         log.info("after invoke method:{}", method.getName());
         return result;
     }

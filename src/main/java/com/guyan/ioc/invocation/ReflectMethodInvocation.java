@@ -40,7 +40,8 @@ public class ReflectMethodInvocation implements MethodInvocation {
     @Override
     public Object proceed() throws Throwable {
 
-        if (index == interceptors.size() - 1) {
+        // 如果所有拦截器都已执行完毕，调用目标方法
+        if (index >= interceptors.size() - 1) {
             return method.invoke(target, args);
         }
         index++;
