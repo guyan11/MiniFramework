@@ -1,9 +1,9 @@
 package com.guyan.ioc.interceptor;
 
-import java.lang.reflect.Method;
+import com.guyan.ioc.invocation.MethodInvocation;
 
 public interface MethodInterceptor {
 
-    Object invoke(Method method, Object[] args, Object target) throws Throwable;
+    Object invoke(MethodInvocation invocation) throws Throwable;
 
 }

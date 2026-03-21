@@ -1,5 +1,8 @@
 package com.guyan.ioc.interceptor;
 
+import com.guyan.ioc.invocation.MethodInvocation;
+import com.guyan.ioc.invocation.ReflectMethodInvocation;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
@@ -16,6 +19,7 @@ public class AopInvocationHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        return methodInterceptor.invoke(method, args, target);
+        MethodInvocation invocation = new ReflectMethodInvocation(target, method, args, null);
+        return methodInterceptor.invoke(invocation);
     }
 }

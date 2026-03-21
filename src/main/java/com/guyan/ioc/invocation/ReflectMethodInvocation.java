@@ -33,7 +33,7 @@ public class ReflectMethodInvocation implements MethodInvocation {
     }
 
     @Override
-    public Object getThis() {
+    public Object getTarget() {
         return target;
     }
 
@@ -45,6 +45,6 @@ public class ReflectMethodInvocation implements MethodInvocation {
         }
         index++;
         MethodInterceptor interceptor = interceptors.get(index);
-        return interceptor.invoke(method, args, target);
+        return interceptor.invoke(this);
     }
 }
