@@ -7,7 +7,7 @@ import java.lang.reflect.Field;
 
 public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
 
-    private DefaultBeanFactory defaultBeanFactory;
+    private final DefaultBeanFactory defaultBeanFactory;
 
     public AutowiredAnnotationBeanPostProcessor(DefaultBeanFactory defaultBeanFactory) {
         this.defaultBeanFactory = defaultBeanFactory;

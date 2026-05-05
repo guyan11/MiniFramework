@@ -58,6 +58,22 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
         return createBean(name, beanDefinition);
     }
 
+    @Override
+    public Object getBeanByType(Class<?> type) {
+        for (String name : beanDefinitionMap.keySet()) {
+            String className = beanDefinitionMap.get(name).getClassName();
+            try {
+                Class<?> clazz = Class.forName(className);
+                if (type.isAssignableFrom(clazz)) {
+                    return getBean(name);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+
     private Object createBean(String name, BeanDefinition bd) {
         String className = bd.getClassName();
         Class<?> clazz;
