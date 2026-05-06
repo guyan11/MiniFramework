@@ -1,10 +1,12 @@
 package com.guyan.ioc.core;
 
+import com.guyan.ioc.annonation.Autowired;
 import com.guyan.ioc.convert.TypeConverterFactory;
 import com.guyan.ioc.lifecycle.BeanPostProcessor;
 import com.guyan.ioc.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -264,6 +266,55 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
                 addBeanPostProcessor(processor);
             }
         }
+    }
+
+    private Object instantiateBean(BeanDefinition bd) {
+
+        String className = bd.getClassName();
+        try {
+            Class<?> clazz = Class.forName(className);
+            Constructor<?> constructor = determineConstructor(clazz);
+            if (constructor == null) {
+                throw new RuntimeException("constructor is null");
+            }
+
+            Object[] arguments = resolveConstructorArguments(constructor);
+
+            constructor.setAccessible(true);
+            return constructor.newInstance(arguments);
+        } catch (Exception e) {
+            log.error("instantiateBean 失败", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Constructor<?> determineConstructor(Class<?> clazz) {
+
+        Constructor<?>[] constructors = clazz.getConstructors();
+        Constructor<?> defaultConstructor = null;
+        if (constructors.length == 1) {
+            return constructors[0];
+        }
+        for (Constructor<?> constructor : constructors) {
+            if (constructor.isAnnotationPresent(Autowired.class)) {
+                return constructor;
+            }
+            if (constructor.getParameterCount() == 0) {
+                defaultConstructor = constructor;
+            }
+        }
+        return defaultConstructor;
+    }
+
+    private Object[] resolveConstructorArguments(Constructor<?> constructor) {
+        Class<?>[] parameterTypes = constructor.getParameterTypes();
+        Object[] arguments = new Object[parameterTypes.length];
+        for (int i = 0; i < parameterTypes.length; i++) {
+            Class<?> parameterType = parameterTypes[i];
+            arguments[i] = getBeanByType(parameterType);
+
+        }
+        return arguments;
     }
 
 }
