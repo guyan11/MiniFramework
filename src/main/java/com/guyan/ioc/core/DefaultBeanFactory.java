@@ -7,10 +7,7 @@ import com.guyan.ioc.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanDefinitionRegistry {
@@ -28,36 +25,48 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
 
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
 
+    private final Set<String> singletonsCurrentlyInCreation = new HashSet<>();
+
     @Override
     public Object getBean(String name) {
-        Object bean = getSingletonBean(name);
-        if (bean != null) {
-            return bean;
+
+        if (singletonsCurrentlyInCreation.contains(name)) {
+            throw new IllegalArgumentException("Circular dependency detected:" + name);
         }
 
-        Object earlySingletonBean = getEarlySingleton(name);
-        if (earlySingletonBean != null) {
-            return earlySingletonBean;
-        }
-
-        Object factoryBean;
         try {
-            factoryBean = getFactoryBean(name);
-            if (factoryBean != null) {
-                registerEarlySingleton(name, factoryBean);
-                return factoryBean;
+            singletonsCurrentlyInCreation.add(name);
+            Object bean = getSingletonBean(name);
+            if (bean != null) {
+                return bean;
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+
+            Object earlySingletonBean = getEarlySingleton(name);
+            if (earlySingletonBean != null) {
+                return earlySingletonBean;
+            }
+
+            Object factoryBean;
+            try {
+                factoryBean = getFactoryBean(name);
+                if (factoryBean != null) {
+                    registerEarlySingleton(name, factoryBean);
+                    return factoryBean;
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+
+            BeanDefinition beanDefinition = getBeanDefinition(name);
+            if (beanDefinition == null) {
+                throw new IllegalArgumentException("No such bean '" + name + "' is defined");
+            }
+
+            return createBean(name, beanDefinition);
+        } finally {
+            singletonsCurrentlyInCreation.remove(name);
         }
-
-
-        BeanDefinition beanDefinition = getBeanDefinition(name);
-        if (beanDefinition == null) {
-            throw new IllegalArgumentException("No such bean '" + name + "' is defined");
-        }
-
-        return createBean(name, beanDefinition);
     }
 
     @Override
@@ -80,8 +89,9 @@ public class DefaultBeanFactory implements BeanFactory, SingletonRegistry, BeanD
         String className = bd.getClassName();
         Class<?> clazz;
         try {
-            clazz = Class.forName(className);
-            Object bean = clazz.newInstance();
+            // clazz = Class.forName(className);
+            // Object bean = clazz.newInstance();
+            Object bean = instantiateBean(bd);
 
             bean = applyBeanPostProcessorsBeforeInitialization(bean, name);
 

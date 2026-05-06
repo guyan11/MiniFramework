@@ -39,4 +39,18 @@ public class AutoWireTest {
         userService.test();
     }
 
+    @Test
+    public void testByConstructor() {
+
+        DefaultBeanFactory defaultBeanFactory = new DefaultBeanFactory();
+
+        ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(defaultBeanFactory);
+
+        scanner.doScan("com.guyan.service");
+
+        UserServiceAop userService = (UserServiceAop) defaultBeanFactory.getBeanByType(UserServiceAop.class);
+
+        userService.test();
+    }
+
 }
